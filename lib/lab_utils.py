@@ -110,7 +110,121 @@ def show_dataframe_fit(df: pd.DataFrame, max_width: int = 700, height: int | Non
         st.dataframe(df, width=width, height=height)
 
 
-def render_free_code_console(key_prefix: str = "console"):
+def render_visualization(df: pd.DataFrame, key_prefix: str = "viz"):
+    """
+    전처리 후 데이터를 seaborn/matplotlib으로 시각화하는 섹션.
+    차트 종류를 고르면 그에 맞는 옵션(컬럼, 값)을 선택하고,
+    추천 코드를 보여준 뒤 편집/실행해서 바로 차트를 확인할 수 있다.
+    """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    st.markdown("### 📊 데이터 시각화 (선택)")
+    do_viz = st.checkbox("차트 그리기", key=f"{key_prefix}_do")
+    if not do_viz:
+        return
+
+    num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    cat_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+
+    chart_type = st.radio(
+        "차트 종류 (필수)",
+        ["히스토그램", "박스플롯", "산점도", "상관관계 히트맵", "카운트플롯 (범주형)"],
+        key=f"{key_prefix}_type",
+    )
+
+    code = None
+
+    if chart_type == "히스토그램":
+        if not num_cols:
+            st.info("숫자형 컬럼이 없습니다.")
+        else:
+            col = st.selectbox("컬럼 선택", num_cols, key=f"{key_prefix}_hist_col")
+            bins = st.slider("bins (막대 개수)", 5, 100, 30, key=f"{key_prefix}_hist_bins")
+            code = (
+                "import matplotlib.pyplot as plt\nimport seaborn as sns\n\n"
+                "fig, ax = plt.subplots(figsize=(6, 4))\n"
+                f"sns.histplot(df['{col}'], bins={bins}, ax=ax)\n"
+                f"ax.set_title('{col} 히스토그램')"
+            )
+
+    elif chart_type == "박스플롯":
+        if not num_cols:
+            st.info("숫자형 컬럼이 없습니다.")
+        else:
+            col = st.selectbox("숫자형 컬럼 선택", num_cols, key=f"{key_prefix}_box_col")
+            group_col = st.selectbox("그룹 기준 컬럼 (선택 안 함 가능)", ["(선택 안 함)"] + cat_cols, key=f"{key_prefix}_box_group")
+            if group_col == "(선택 안 함)":
+                code = (
+                    "import matplotlib.pyplot as plt\nimport seaborn as sns\n\n"
+                    "fig, ax = plt.subplots(figsize=(6, 4))\n"
+                    f"sns.boxplot(y=df['{col}'], ax=ax)\n"
+                    f"ax.set_title('{col} 박스플롯')"
+                )
+            else:
+                code = (
+                    "import matplotlib.pyplot as plt\nimport seaborn as sns\n\n"
+                    "fig, ax = plt.subplots(figsize=(7, 4))\n"
+                    f"sns.boxplot(x=df['{group_col}'], y=df['{col}'], ax=ax)\n"
+                    f"ax.set_title('{group_col}별 {col} 박스플롯')\n"
+                    "plt.xticks(rotation=30)"
+                )
+
+    elif chart_type == "산점도":
+        if len(num_cols) < 2:
+            st.info("숫자형 컬럼이 2개 이상 필요합니다.")
+        else:
+            x_col = st.selectbox("X축 컬럼", num_cols, key=f"{key_prefix}_scatter_x")
+            y_col = st.selectbox("Y축 컬럼", [c for c in num_cols if c != x_col], key=f"{key_prefix}_scatter_y")
+            hue_col = st.selectbox("색상 구분(hue) 컬럼 (선택 안 함 가능)", ["(선택 안 함)"] + cat_cols, key=f"{key_prefix}_scatter_hue")
+            hue_arg = "" if hue_col == "(선택 안 함)" else f", hue=df['{hue_col}']"
+            code = (
+                "import matplotlib.pyplot as plt\nimport seaborn as sns\n\n"
+                "fig, ax = plt.subplots(figsize=(6, 5))\n"
+                f"sns.scatterplot(x=df['{x_col}'], y=df['{y_col}']{hue_arg}, ax=ax)\n"
+                f"ax.set_title('{x_col} vs {y_col}')"
+            )
+
+    elif chart_type == "상관관계 히트맵":
+        if len(num_cols) < 2:
+            st.info("숫자형 컬럼이 2개 이상 필요합니다.")
+        else:
+            cmap = st.selectbox("색상 팔레트", ["coolwarm", "viridis", "Blues", "YlOrRd"], key=f"{key_prefix}_heat_cmap")
+            code = (
+                "import matplotlib.pyplot as plt\nimport seaborn as sns\n\n"
+                f"num_cols = {num_cols}\n"
+                "corr = df[num_cols].corr()\n"
+                "fig, ax = plt.subplots(figsize=(7, 6))\n"
+                f"sns.heatmap(corr, annot=True, fmt='.2f', cmap='{cmap}', ax=ax)\n"
+                "ax.set_title('상관관계 히트맵')"
+            )
+
+    else:  # 카운트플롯
+        if not cat_cols:
+            st.info("범주형 컬럼이 없습니다.")
+        else:
+            col = st.selectbox("범주형 컬럼 선택", cat_cols, key=f"{key_prefix}_count_col")
+            code = (
+                "import matplotlib.pyplot as plt\nimport seaborn as sns\n\n"
+                "fig, ax = plt.subplots(figsize=(6, 4))\n"
+                f"sns.countplot(x=df['{col}'], ax=ax)\n"
+                f"ax.set_title('{col} 카운트플롯')\n"
+                "plt.xticks(rotation=30)"
+            )
+
+    if code is not None:
+        code = code_box(f"{key_prefix}_chart", code)
+        if st.button("차트 그리기 실행", key=f"{key_prefix}_run", type="primary"):
+            try:
+                plt.close("all")
+                import seaborn as sns
+                run_code(code, {"df": df, "plt": plt, "sns": sns})
+                fig = plt.gcf()
+                st.pyplot(fig)
+                plt.close(fig)
+            except Exception as e:
+                st.error(f"실행 오류: {e}")
     """
     학생이 직접 파이썬 코드를 입력하고 즉시 실행 결과를 확인할 수 있는 콘솔.
     df(현재 데이터), pd, np 를 기본으로 사용할 수 있다.
