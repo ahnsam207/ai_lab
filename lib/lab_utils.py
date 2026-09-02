@@ -225,6 +225,9 @@ def render_visualization(df: pd.DataFrame, key_prefix: str = "viz"):
                 plt.close(fig)
             except Exception as e:
                 st.error(f"실행 오류: {e}")
+
+
+def render_free_code_console(key_prefix: str = "console"):
     """
     학생이 직접 파이썬 코드를 입력하고 즉시 실행 결과를 확인할 수 있는 콘솔.
     df(현재 데이터), pd, np 를 기본으로 사용할 수 있다.
