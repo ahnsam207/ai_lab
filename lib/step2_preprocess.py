@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from lab_utils import run_code, code_box, go_next, go_prev, show_dataframe_fit, render_visualization
+from lab_utils import run_code, code_box, go_next, go_prev, show_dataframe_fit
 
 
 def _null_handling_code(df, method):
@@ -157,9 +157,6 @@ def render():
                 show_dataframe_fit(result["result_df"].head())
             except Exception as e:
                 st.error(f"실행 오류: {e}")
-
-    st.markdown("---")
-    render_visualization(df, key_prefix="step2_viz")
 
     st.markdown("---")
     c1, c2 = st.columns(2)

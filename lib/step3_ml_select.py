@@ -1,5 +1,5 @@
 import streamlit as st
-from lab_utils import go_next, go_prev
+from lab_utils import go_next, go_prev, render_visualization
 
 ALGO_BY_TYPE = {
     "분류": ["로지스틱 회귀", "랜덤포레스트", "SVM"],
@@ -38,6 +38,9 @@ def render():
     st.session_state["problem_type"] = problem_type
     st.session_state["algorithm"] = algorithm
     st.session_state["target_col"] = target_col
+
+    st.markdown("---")
+    render_visualization(df, key_prefix="step3_viz")
 
     st.markdown("---")
     c1, c2 = st.columns(2)
