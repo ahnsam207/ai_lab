@@ -161,7 +161,7 @@ def render_free_code_console(key_prefix: str = "console"):
                     if isinstance(result, pd.DataFrame):
                         show_dataframe_fit(result)
                     elif isinstance(result, pd.Series):
-                        st.dataframe(result.to_frame(name="값"))
+                        show_dataframe_fit(result.to_frame(name="값"))
                     else:
                         st.write(result)
                 elif not printed:
