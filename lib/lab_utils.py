@@ -89,3 +89,19 @@ def code_box(key: str, recommended_code: str) -> str:
     """추천 코드를 보여주고 편집 가능한 text_area를 반환"""
     st.code(recommended_code, language="python")
     return st.text_area("코드 수정 후 실행하세요", value=recommended_code, height=180, key=f"code_{key}")
+
+
+def show_named_series(series: pd.Series, index_label: str, value_label: str, max_width: int = 480):
+    """
+    컬럼명이 '0'처럼 무의미하게 나오는 Series 결과를,
+    '컬럼명 / 값' 형태의 표로 바꾸고 화면 크기에 맞는 적당한 폭으로 표시한다.
+    """
+    display_df = series.rename(value_label).rename_axis(index_label).reset_index()
+    st.dataframe(display_df, hide_index=True, width=max_width)
+
+
+def show_dataframe_fit(df: pd.DataFrame, max_width: int = 700, height: int | None = None):
+    """열 개수에 비례해 적당한 폭으로 데이터프레임을 표시 (화면 전체로 늘어나는 것 방지)"""
+    n_cols = max(len(df.columns), 1)
+    width = min(120 + n_cols * 110, max_width)
+    st.dataframe(df, width=width, height=height)

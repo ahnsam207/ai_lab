@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from lab_utils import run_code, code_box, go_next, go_prev
+from lab_utils import run_code, code_box, go_next, go_prev, show_dataframe_fit
 
 
 def _null_handling_code(df, method):
@@ -53,10 +53,10 @@ def render():
             c1, c2 = st.columns(2)
             with c1:
                 st.caption("실행 전")
-                st.dataframe(df.head())
+                show_dataframe_fit(df.head())
             with c2:
                 st.caption("실행 후")
-                st.dataframe(result["result_df"].head())
+                show_dataframe_fit(result["result_df"].head())
         except Exception as e:
             st.error(f"실행 오류: {e}")
 
@@ -97,7 +97,7 @@ def render():
                     result = run_code(code, {"df": df})
                     st.session_state["df"] = result["result_df"]
                     st.success("인코딩 완료")
-                    st.dataframe(result["result_df"].head())
+                    show_dataframe_fit(result["result_df"].head())
                 except Exception as e:
                     st.error(f"실행 오류: {e}")
             df = st.session_state["df"]
@@ -120,7 +120,7 @@ def render():
                     result = run_code(code, {"df": df})
                     st.session_state["df"] = result["result_df"]
                     st.success("스케일링 완료")
-                    st.dataframe(result["result_df"].head())
+                    show_dataframe_fit(result["result_df"].head())
                 except Exception as e:
                     st.error(f"실행 오류: {e}")
             df = st.session_state["df"]
@@ -141,7 +141,7 @@ def render():
                 result = run_code(code, {"df": df})
                 st.session_state["df"] = result["result_df"]
                 st.success(f"이상치 제거 완료 — {df.shape[0]}행 → {result['result_df'].shape[0]}행")
-                st.dataframe(result["result_df"].head())
+                show_dataframe_fit(result["result_df"].head())
             except Exception as e:
                 st.error(f"실행 오류: {e}")
         df = st.session_state["df"]
@@ -154,7 +154,7 @@ def render():
                 result = run_code(code, {"df": df})
                 st.session_state["df"] = result["result_df"]
                 st.success(f"중복 {dup_count}건 제거 완료")
-                st.dataframe(result["result_df"].head())
+                show_dataframe_fit(result["result_df"].head())
             except Exception as e:
                 st.error(f"실행 오류: {e}")
 

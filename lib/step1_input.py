@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from sklearn import datasets as sk_datasets
-from lab_utils import run_code, code_box, go_next
+from lab_utils import run_code, code_box, go_next, show_named_series, show_dataframe_fit
 
 SAMPLE_SETS = {
     "iris (분류용)": lambda: sk_datasets.load_iris(as_frame=True).frame,
@@ -40,7 +40,7 @@ def render():
     if st.session_state["df"] is not None:
         df = st.session_state["df"]
         st.success(f"데이터 준비 완료 — {df.shape[0]}행 × {df.shape[1]}열")
-        st.dataframe(df.head())
+        show_dataframe_fit(df.head())
 
         st.markdown("### 데이터 확인 옵션 (선택)")
         opt_describe = st.checkbox("기술통계 보기 (df.describe())")
@@ -52,7 +52,7 @@ def render():
             if st.button("기술통계 실행", key="run_describe"):
                 try:
                     result = run_code(f"result = {code}", {"df": df})
-                    st.dataframe(result["result"])
+                    show_dataframe_fit(result["result"], max_width=900)
                 except Exception as e:
                     st.error(f"실행 오류: {e}")
 
@@ -61,7 +61,7 @@ def render():
             if st.button("결측치 요약 실행", key="run_null"):
                 try:
                     result = run_code(f"result = {code}", {"df": df})
-                    st.dataframe(result["result"])
+                    show_named_series(result["result"], index_label="컬럼", value_label="결측치 수")
                 except Exception as e:
                     st.error(f"실행 오류: {e}")
 
@@ -70,7 +70,7 @@ def render():
             if st.button("데이터 타입 보기 실행", key="run_dtype"):
                 try:
                     result = run_code(f"result = {code}", {"df": df})
-                    st.dataframe(result["result"].astype(str))
+                    show_named_series(result["result"].astype(str), index_label="컬럼", value_label="데이터 타입")
                 except Exception as e:
                     st.error(f"실행 오류: {e}")
 

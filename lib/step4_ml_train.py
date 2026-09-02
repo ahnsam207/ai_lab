@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from lab_utils import run_code, code_box, go_next, go_prev
+from lab_utils import run_code, code_box, go_next, go_prev, show_dataframe_fit
 
 SPLIT_RATIOS = {"70:30": 0.3, "80:20": 0.2, "90:10": 0.1}
 
@@ -79,8 +79,13 @@ def render():
                     cm = confusion_matrix(result["y_test"], result["y_pred"])
                     st.session_state["ml_metrics"] = {"accuracy": acc}
                     st.success(f"정확도: {acc:.3f}")
-                    st.write("혼동행렬")
-                    st.dataframe(pd.DataFrame(cm))
+                    st.write("혼동행렬 (행: 실제값, 열: 예측값)")
+                    cm_df = pd.DataFrame(
+                        cm,
+                        index=[f"실제 {c}" for c in sorted(set(result["y_test"]))],
+                        columns=[f"예측 {c}" for c in sorted(set(result["y_test"]))],
+                    )
+                    show_dataframe_fit(cm_df, max_width=500)
                 else:
                     from sklearn.metrics import r2_score, mean_squared_error
                     r2 = r2_score(result["y_test"], result["y_pred"])
