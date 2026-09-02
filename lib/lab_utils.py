@@ -104,4 +104,7 @@ def show_dataframe_fit(df: pd.DataFrame, max_width: int = 700, height: int | Non
     """열 개수에 비례해 적당한 폭으로 데이터프레임을 표시 (화면 전체로 늘어나는 것 방지)"""
     n_cols = max(len(df.columns), 1)
     width = min(120 + n_cols * 110, max_width)
-    st.dataframe(df, width=width, height=height)
+    if height is None:
+        st.dataframe(df, width=width)
+    else:
+        st.dataframe(df, width=width, height=height)
