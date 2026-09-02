@@ -2,7 +2,7 @@ import sys, os
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "lib"))
 
 import streamlit as st
-from lab_utils import init_session, render_progress
+from lab_utils import init_session, render_progress, render_free_code_console
 import step1_input
 import step2_preprocess
 import step3_ml_select
@@ -26,3 +26,6 @@ STEP_RENDERERS = {
 }
 
 STEP_RENDERERS[st.session_state["step"]]()
+
+st.markdown("---")
+render_free_code_console(key_prefix=f"step{st.session_state['step']}")
