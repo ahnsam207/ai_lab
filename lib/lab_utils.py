@@ -108,3 +108,63 @@ def show_dataframe_fit(df: pd.DataFrame, max_width: int = 700, height: int | Non
         st.dataframe(df, width=width)
     else:
         st.dataframe(df, width=width, height=height)
+
+
+def render_free_code_console(key_prefix: str = "console"):
+    """
+    학생이 직접 파이썬 코드를 입력하고 즉시 실행 결과를 확인할 수 있는 콘솔.
+    df(현재 데이터), pd, np 를 기본으로 사용할 수 있다.
+    - print() 출력, 마지막 줄의 값(자동 출력), DataFrame/Series/숫자/문자열 등을
+      결과 형태에 맞게 알아서 보여준다.
+    """
+    import io
+    import contextlib
+    import ast
+
+    with st.expander("🖥️ 직접 코드 작성 & 실행", expanded=False):
+        st.caption("`df`(현재 데이터), `pd`, `np`를 바로 사용할 수 있습니다. 마지막 줄의 값이나 print() 출력이 아래에 표시됩니다.")
+        code = st.text_area(
+            "Python 코드 입력",
+            value="df.head()",
+            height=160,
+            key=f"{key_prefix}_free_code",
+        )
+
+        if st.button("▶ 실행", key=f"{key_prefix}_free_run", type="primary"):
+            df = st.session_state.get("df")
+            extra_vars = {"df": df} if df is not None else {}
+            stdout_buf = io.StringIO()
+
+            try:
+                # 마지막 줄이 단순 표현식(예: df.head())이면 결과를 자동으로 잡아서 보여준다.
+                tree = ast.parse(code, mode="exec")
+                last_expr_node = None
+                if tree.body and isinstance(tree.body[-1], ast.Expr):
+                    last_expr_node = tree.body.pop()
+
+                body_src = ast.unparse(tree) if tree.body else ""
+                if last_expr_node is not None:
+                    result_line = f"_console_result_ = {ast.unparse(last_expr_node.value)}"
+                    full_code = f"{body_src}\n{result_line}" if body_src else result_line
+                else:
+                    full_code = body_src
+
+                with contextlib.redirect_stdout(stdout_buf):
+                    scope = run_code(full_code, extra_vars)
+
+                printed = stdout_buf.getvalue()
+                if printed:
+                    st.text(printed)
+
+                result = scope.get("_console_result_")
+                if result is not None:
+                    if isinstance(result, pd.DataFrame):
+                        show_dataframe_fit(result)
+                    elif isinstance(result, pd.Series):
+                        st.dataframe(result.to_frame(name="값"))
+                    else:
+                        st.write(result)
+                elif not printed:
+                    st.info("코드는 정상 실행됐지만 화면에 표시할 출력이 없습니다. (print()를 쓰거나 마지막 줄에 값을 두세요)")
+            except Exception as e:
+                st.error(f"실행 오류: {e}")
